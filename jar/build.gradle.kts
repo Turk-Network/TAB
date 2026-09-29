@@ -29,21 +29,11 @@ val platformPaths = setOf(
     ":bukkit:v1_21_R6",
     ":bukkit:v1_21_R7",
     ":bukkit:v26_1",
-    ":bukkit:v26_2",
-    ":bungeecord",
-    ":fand",
-    ":velocity"
-)
-
-val moddedPaths = setOf(
-    ":fabric",
-    ":neoforge",
-    ":forge"
+    ":bukkit:v26_2"
 )
 
 val brokenPlatforms: List<Project> = brokenPlatformPaths.map { rootProject.project(it) }
 val platforms: List<Project> = platformPaths.map { rootProject.project(it) }
-val moddedPlatforms: List<Project> = moddedPaths.map { rootProject.project(it) }
 
 tasks {
     shadowJar {
@@ -58,11 +48,6 @@ tasks {
 
         platforms.forEach { p ->
             val task = p.tasks.named<ShadowJar>("shadowJar").get()
-            registerPlatform(p, task)
-        }
-
-        moddedPlatforms.forEach { p ->
-            val task = p.tasks.named<Jar>("jar").get()
             registerPlatform(p, task)
         }
     }

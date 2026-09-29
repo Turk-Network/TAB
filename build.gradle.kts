@@ -29,13 +29,7 @@ val platformPaths = setOf(
     ":bukkit:v1_21_R6",
     ":bukkit:v1_21_R7",
     ":bukkit:v26_1",
-    ":bukkit:v26_2",
-    ":bungeecord",
-    ":velocity",
-    ":fabric",
-    ":fand",
-    ":neoforge"
-//    ":forge"
+    ":bukkit:v26_2"
 )
 
 val specialPaths = setOf(

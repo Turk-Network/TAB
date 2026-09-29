@@ -4,30 +4,18 @@ dependencyResolutionManagement {
     repositories {
         mavenCentral() // Netty, SnakeYaml, json-simple, Guava, Kyori event, bStats, AuthLib, LuckPerms
         maven("https://repo.viaversion.com/") // ViaVersion
-        maven("https://repo.william278.net/releases/") // VelocityScoreboardAPI
         maven("https://repo.codemc.org/repository/nms/") // CraftBukkit + NMS
-        maven("https://repo.papermc.io/repository/maven-public/") // paperweight, Velocity, Adventure, BungeeCord-API
+        maven("https://repo.papermc.io/repository/maven-public/") // paperweight, Paper API, Adventure
         maven("https://repo.extendedclip.com/content/repositories/placeholderapi/") // PlaceholderAPI
-        maven("https://repo.opencollab.dev/maven-snapshots/") // Floodgate, Bungeecord-proxy
-        maven("https://jitpack.io") // PremiumVanish, Vault, YamlAssist, RedisBungee
+        maven("https://repo.opencollab.dev/maven-snapshots/") // Floodgate
+        maven("https://jitpack.io") // PremiumVanish, Vault, YamlAssist
         maven("https://mvn.lib.co.nz/public") // LibsDisguises
-        maven("https://repo.william278.net/velocity/") // Velocity-proxy
-        exclusiveContent {
-            forRepository {
-                maven("https://repo.fandmc.cn/repository/maven-public/") // Fand
-            }
-            filter {
-                includeGroup("io.fand")
-            }
-        }
     }
 }
 
 pluginManagement {
     includeBuild("build-logic")
     repositories {
-        maven("https://repo.spongepowered.org/repository/maven-public/")
-        maven("https://maven.architectury.dev/")
         gradlePluginPortal()
         mavenCentral()
     }
@@ -37,7 +25,6 @@ rootProject.name = "TAB"
 
 include(":api")
 include(":shared")
-include(":velocity")
 include(":bukkit")
 include(":bukkit:paper_1_21")
 include(":bukkit:paper_1_21_2")
@@ -54,9 +41,4 @@ include(":bukkit:v1_21_R6")
 include(":bukkit:v1_21_R7")
 include(":bukkit:v26_1")
 include(":bukkit:v26_2")
-include(":bungeecord")
-include(":fabric")
-include(":neoforge")
-include(":forge")
-include(":fand")
 include(":jar")
