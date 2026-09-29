@@ -59,7 +59,7 @@ public class RelationalPlaceholderImpl extends TabPlaceholder implements Relatio
                 if (r instanceof CustomThreaded) {
                     ((CustomThreaded) r).getCustomThread().execute(task);
                 } else {
-                    task.run();
+                    TAB.getInstance().getCpu().getProcessingThread().execute(task); // Never run features in caller thread (may be server main thread)
                 }
             }
         }
@@ -91,30 +91,33 @@ public class RelationalPlaceholderImpl extends TabPlaceholder implements Relatio
 
     @Override
     public void updateFromNested(@NonNull TabPlayer viewer) {
+        Map<TabPlayer, String> viewerMap = viewer.lastRelationalValues.computeIfAbsent(this, v -> Collections.synchronizedMap(new WeakHashMap<>()));
+        boolean changed = false;
         for (TabPlayer target : TAB.getInstance().getOnlinePlayers()) {
             String value = request(viewer, target);
             String s = replacements.findReplacement(String.valueOf(value));
-            viewer.lastRelationalValues.computeIfAbsent(this, v -> Collections.synchronizedMap(new WeakHashMap<>())).put(target, s);
-            if (!target.isLoaded()) return; // Updated on join
+            if (s.equals(viewerMap.put(target, s))) continue; // Value did not change, no need to refresh anything
+            changed = true;
+            if (!target.isLoaded()) continue; // Updated on join
             for (RefreshableFeature f : reference.getUsedByFeatures()) {
                 TimedCaughtTask task = new TimedCaughtTask(TAB.getInstance().getCpu(), () -> f.refresh(target, true),
                         f.getFeatureName(), f.getRefreshDisplayName());
                 if (f instanceof CustomThreaded) {
                     ((CustomThreaded) f).getCustomThread().execute(task);
                 } else {
-                    task.run();
+                    TAB.getInstance().getCpu().getProcessingThread().execute(task); // Never run features in caller thread (may be server main thread)
                 }
             }
             updateParents(target);
         }
-        if (!viewer.isLoaded()) return; // Updated on join
+        if (!changed || !viewer.isLoaded()) return; // Nothing changed or updated on join
         for (RefreshableFeature f : reference.getUsedByFeatures()) {
             TimedCaughtTask task = new TimedCaughtTask(TAB.getInstance().getCpu(), () -> f.refresh(viewer, true),
                     f.getFeatureName(), f.getRefreshDisplayName());
             if (f instanceof CustomThreaded) {
                 ((CustomThreaded) f).getCustomThread().execute(task);
             } else {
-                task.run();
+                TAB.getInstance().getCpu().getProcessingThread().execute(task); // Never run features in caller thread (may be server main thread)
             }
         }
         updateParents(viewer);

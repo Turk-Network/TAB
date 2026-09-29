@@ -60,12 +60,12 @@ public class ServerPlaceholderImpl extends TabPlaceholder implements ServerPlace
         if (hasValueChanged(value)) {
             for (RefreshableFeature r : reference.getUsedByFeatures()) {
                 for (TabPlayer all : TAB.getInstance().getOnlinePlayers()) {
-                    if (!all.isLoaded()) return; // Updated on join
+                    if (!all.isLoaded()) continue; // Updated on join
                     TimedCaughtTask task = new TimedCaughtTask(TAB.getInstance().getCpu(), () -> r.refresh(all, false), r.getFeatureName(), r.getRefreshDisplayName());
                     if (r instanceof CustomThreaded) {
                         ((CustomThreaded) r).getCustomThread().execute(task);
                     } else {
-                        task.run();
+                        TAB.getInstance().getCpu().getProcessingThread().execute(task); // Never run features in caller thread (may be server main thread)
                     }
                 }
             }

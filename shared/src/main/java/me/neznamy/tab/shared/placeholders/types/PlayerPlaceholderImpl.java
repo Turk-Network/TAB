@@ -58,7 +58,7 @@ public class PlayerPlaceholderImpl extends TabPlaceholder implements PlayerPlace
                 if (r instanceof CustomThreaded) {
                     ((CustomThreaded) r).getCustomThread().execute(task);
                 } else {
-                    task.run();
+                    TAB.getInstance().getCpu().getProcessingThread().execute(task); // Never run features in caller thread (may be server main thread)
                 }
             }
         }
@@ -88,7 +88,7 @@ public class PlayerPlaceholderImpl extends TabPlaceholder implements PlayerPlace
             if (r instanceof CustomThreaded) {
                 ((CustomThreaded) r).getCustomThread().execute(task);
             } else {
-                task.run();
+                TAB.getInstance().getCpu().getProcessingThread().execute(task); // Never run features in caller thread (may be server main thread)
             }
         }
     }
