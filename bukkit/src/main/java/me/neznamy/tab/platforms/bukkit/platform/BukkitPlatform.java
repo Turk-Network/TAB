@@ -7,7 +7,6 @@ import me.clip.placeholderapi.PlaceholderAPIPlugin;
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import me.neznamy.tab.platforms.bukkit.*;
 import me.neznamy.tab.platforms.bukkit.bossbar.BukkitBossBar;
-import me.neznamy.tab.platforms.bukkit.bossbar.ViaBossBar;
 import me.neznamy.tab.platforms.bukkit.features.BukkitTabExpansion;
 import me.neznamy.tab.platforms.bukkit.features.PerWorldPlayerList;
 import me.neznamy.tab.platforms.bukkit.hook.BukkitPremiumVanishHook;
@@ -32,7 +31,6 @@ import me.neznamy.tab.shared.platform.Scoreboard;
 import me.neznamy.tab.shared.platform.TabList;
 import me.neznamy.tab.shared.platform.TabPlayer;
 import me.neznamy.tab.shared.platform.impl.AdventureBossBar;
-import me.neznamy.tab.shared.platform.impl.DummyBossBar;
 import me.neznamy.tab.shared.util.ReflectionUtils;
 import net.kyori.adventure.audience.Audience;
 import net.milkbowl.vault.chat.Chat;
@@ -83,8 +81,6 @@ public class BukkitPlatform implements BackendPlatform {
     /** Detection for presence of Paper's MSPT getter */
     private final boolean paperMspt = ReflectionUtils.methodExists(Bukkit.class, "getAverageTickTime");
 
-    private final boolean modernOnlinePlayers;
-
     /** Command map for dynamic command registering */
     private final SimpleCommandMap commandMap;
     private final Map<String, Command> knownCommands;
@@ -102,7 +98,6 @@ public class BukkitPlatform implements BackendPlatform {
     @SuppressWarnings("unchecked")
     public BukkitPlatform(@NotNull JavaPlugin plugin) {
         this.plugin = plugin;
-        modernOnlinePlayers = Bukkit.class.getMethod("getOnlinePlayers").getReturnType() == Collection.class;
         logInfo(new TabTextComponent("Found NMS implementation: " + serverVersionInfo.getImplementationProvider().getClass().getName(), TabTextColor.GRAY));
         try {
             Object server = Bukkit.getServer().getClass().getMethod("getServer").invoke(Bukkit.getServer());
@@ -141,10 +136,9 @@ public class BukkitPlatform implements BackendPlatform {
     }
 
     @Override
-    @Nullable
+    @NotNull
     public PipelineInjector createPipelineInjector() {
-        return serverVersionInfo.getServerVersion().getNetworkId() >= ProtocolVersion.V1_8.getNetworkId()
-                ? new BukkitPipelineInjector() : null;
+        return new BukkitPipelineInjector();
     }
 
     @Override
@@ -267,14 +261,8 @@ public class BukkitPlatform implements BackendPlatform {
         //noinspection ConstantValue
         if (AdventureBossBar.isAvailable() && Audience.class.isAssignableFrom(Player.class)) return new AdventureBossBar(player);
 
-        // 1.9+ server, handle using API, potential 1.8 players are handled by ViaVersion
-        if (BukkitBossBar.isAvailable()) return new BukkitBossBar((BukkitTabPlayer) player);
-
-        // 1.9+ player on 1.8 server, handle using ViaVersion API
-        if (player.getVersion().getNetworkId() >= ProtocolVersion.V1_9.getNetworkId()) return new ViaBossBar((BukkitTabPlayer) player);
-
-        // 1.8- server and player, no implementation
-        return new DummyBossBar();
+        // Spigot, handle using Bukkit API
+        return new BukkitBossBar((BukkitTabPlayer) player);
     }
 
     @Override
@@ -290,7 +278,7 @@ public class BukkitPlatform implements BackendPlatform {
 
     @Override
     public boolean supportsListed() {
-        return serverVersionInfo.getServerVersion().getNetworkId() >= ProtocolVersion.V1_19_3.getNetworkId();
+        return true;
     }
 
     @Override
@@ -300,7 +288,7 @@ public class BukkitPlatform implements BackendPlatform {
 
     @Override
     public boolean isSafeFromPacketEventsBug() {
-        return serverVersionInfo.getServerVersion().getMinorVersion() >= 13;
+        return true;
     }
 
     @Override
@@ -395,8 +383,7 @@ public class BukkitPlatform implements BackendPlatform {
     }
 
     /**
-     * Converts component to string using bukkit RGB format if supported by the server.
-     * If not, closest legacy color is used instead.
+     * Converts component to string using bukkit RGB format.
      *
      * @param   component
      *          Component to convert
@@ -406,14 +393,10 @@ public class BukkitPlatform implements BackendPlatform {
     public String toBukkitFormat(@NotNull TabComponent component) {
         StringBuilder sb = new StringBuilder();
         if (component.getModifier().getColor() != null) {
-            if (serverVersionInfo.getServerVersion().getNetworkId() >= ProtocolVersion.V1_16.getNetworkId()) {
-                String hexCode = component.getModifier().getColor().getHexCode();
-                sb.append('§').append("x").append('§').append(hexCode.charAt(0)).append('§').append(hexCode.charAt(1))
-                        .append('§').append(hexCode.charAt(2)).append('§').append(hexCode.charAt(3))
-                        .append('§').append(hexCode.charAt(4)).append('§').append(hexCode.charAt(5));
-            } else {
-                sb.append('§').append(component.getModifier().getColor().getLegacyColor().getCharacter());
-            }
+            String hexCode = component.getModifier().getColor().getHexCode();
+            sb.append('§').append("x").append('§').append(hexCode.charAt(0)).append('§').append(hexCode.charAt(1))
+                    .append('§').append(hexCode.charAt(2)).append('§').append(hexCode.charAt(3))
+                    .append('§').append(hexCode.charAt(4)).append('§').append(hexCode.charAt(5));
         }
         sb.append(component.getModifier().getMagicCodes());
         if (component instanceof TabTextComponent) {
@@ -435,18 +418,12 @@ public class BukkitPlatform implements BackendPlatform {
 
     /**
      * Returns online players from Bukkit API.
-     * This method may use reflections, because the return type changed in 1.7.10,
-     * and we want to avoid errors.
      *
      * @return  Online players from Bukkit API.
      */
-    @SneakyThrows
     @NotNull
     public Collection<? extends Player> getOnlinePlayers() {
-        if (modernOnlinePlayers) {
-            return Bukkit.getOnlinePlayers();
-        }
-        return Arrays.asList((Player[]) Bukkit.class.getMethod("getOnlinePlayers").invoke(null));
+        return Bukkit.getOnlinePlayers();
     }
 
     @Override

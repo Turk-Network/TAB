@@ -1,13 +1,11 @@
 package me.neznamy.tab.platforms.bukkit.bossbar;
 
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import me.neznamy.tab.shared.chat.component.TabComponent;
 import me.neznamy.tab.api.bossbar.BarColor;
 import me.neznamy.tab.api.bossbar.BarStyle;
 import me.neznamy.tab.platforms.bukkit.BukkitTabPlayer;
 import me.neznamy.tab.shared.platform.decorators.SafeBossBar;
-import me.neznamy.tab.shared.util.ReflectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.boss.BossBar;
 import org.jetbrains.annotations.NotNull;
@@ -15,18 +13,13 @@ import org.jetbrains.annotations.NotNull;
 import java.util.UUID;
 
 /**
- * BossBar for 1.9+ servers where Bukkit API is used. If ViaVersion is used
- * to allow 1.8 players, it will handle the entity and teleporting by itself.
+ * BossBar implementation using Bukkit API, used on servers without Adventure API (Spigot).
  */
 @RequiredArgsConstructor
 public class BukkitBossBar extends SafeBossBar<BossBar> {
 
-    /** Flag indicating whether this class is available or not */
-    @Getter
-    private static final boolean available = ReflectionUtils.classExists("org.bukkit.boss.BossBar");
-
     /** Style array because names do not match */
-    private static final org.bukkit.boss.BarStyle[] styles = available ? org.bukkit.boss.BarStyle.values() : null;
+    private static final org.bukkit.boss.BarStyle[] styles = org.bukkit.boss.BarStyle.values();
 
     /** Player this handler belongs to */
     @NotNull

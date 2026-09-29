@@ -2,7 +2,7 @@ main: me.neznamy.tab.platforms.bukkit.BukkitTAB
 name: @name@
 version: @version@
 description: @description@
-api-version: 1.13 # Defining to avoid legacy plugin warn
+api-version: "1.21"
 load: POSTWORLD
 author: @author@
 website: "@website@"

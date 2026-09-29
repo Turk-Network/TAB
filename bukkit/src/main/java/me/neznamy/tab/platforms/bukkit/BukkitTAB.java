@@ -23,14 +23,13 @@ public class BukkitTAB extends JavaPlugin {
             Bukkit.getConsoleSender().sendMessage("§c[TAB] ================================================================================");
             if (isSpecialJar()) {
                 Bukkit.getConsoleSender().sendMessage("§c[TAB] The " + ProjectVariables.PLUGIN_VERSION + " release consists of 2 jars due to Java version problems.");
-                Bukkit.getConsoleSender().sendMessage("§c[TAB] One jar is for Paper 1.20.5 - 1.21.4, the other jar is for everything else.");
-                Bukkit.getConsoleSender().sendMessage("§c[TAB] You have installed the jar that explicitly says \"Paper 1.20.5 - 1.21.4\", which does not support your server version (" + Bukkit.getBukkitVersion() + ").");
+                Bukkit.getConsoleSender().sendMessage("§c[TAB] One jar is for Paper 1.21 - 1.21.4, the other jar is for everything else.");
+                Bukkit.getConsoleSender().sendMessage("§c[TAB] You have installed the jar that explicitly says \"Paper 1.21 - 1.21.4\", which does not support your server version (" + Bukkit.getBukkitVersion() + ").");
                 Bukkit.getConsoleSender().sendMessage("§c[TAB] Use the other jar in the release instead.");
             } else {
                 Bukkit.getConsoleSender().sendMessage("§c[TAB] Your server version (" + Bukkit.getBukkitVersion() + ") is not supported.");
-                Bukkit.getConsoleSender().sendMessage("§c[TAB] This jar only supports 1.7.10, 1.8.8, 1.12.2, 1.16.5, 1.17.1, 1.18.2 and 1.19.4 - 26.3");
+                Bukkit.getConsoleSender().sendMessage("§c[TAB] This jar only supports 1.21.x and 26.x");
                 Bukkit.getConsoleSender().sendMessage("§c[TAB] If you just updated to a new Minecraft version, check for TAB updates.");
-                Bukkit.getConsoleSender().sendMessage("§c[TAB] If you are using an unsupported 1.x version, use an older version of TAB (latest TAB 5.x supports all MC 1.x versions).");
                 Bukkit.getConsoleSender().sendMessage("§c[TAB] Thrown error message: " + e.getMessage());
             }
             Bukkit.getConsoleSender().sendMessage("§c[TAB] ================================================================================");
@@ -38,8 +37,8 @@ public class BukkitTAB extends JavaPlugin {
     }
 
     private boolean isSpecialJar() {
-        return !moduleExists("v1_8_R3") &&
-                moduleExists("paper_1_20_5") && moduleExists("paper_1_21_2") && moduleExists("paper_1_21_4") &&
+        return !moduleExists("v1_21_R1") &&
+                moduleExists("paper_1_21") && moduleExists("paper_1_21_2") && moduleExists("paper_1_21_4") &&
                 !moduleExists("paper_1_21_9");
     }
 

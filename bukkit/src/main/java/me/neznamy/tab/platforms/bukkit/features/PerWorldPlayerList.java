@@ -9,7 +9,6 @@ import me.neznamy.tab.shared.features.types.TabFeature;
 import me.neznamy.tab.shared.features.types.UnLoadable;
 import me.neznamy.tab.shared.features.types.VanishListener;
 import me.neznamy.tab.shared.platform.TabPlayer;
-import me.neznamy.tab.shared.util.ReflectionUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -18,7 +17,6 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.metadata.MetadataValue;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,9 +36,6 @@ public class PerWorldPlayerList extends TabFeature implements Listener, Loadable
     /** Config options */
     @NotNull
     private final PerWorldPlayerListConfiguration configuration;
-
-    /** Check for presence of modern (1.12.2+) methods that take plugin as argument to avoid conflict */
-    private final boolean modernMethodsAvailable = ReflectionUtils.methodExists(Player.class, "hidePlayer", Plugin.class, Player.class);
 
     /**
      * Constructs new instance and registers events.
@@ -126,19 +121,11 @@ public class PerWorldPlayerList extends TabFeature implements Listener, Loadable
     }
 
     private void hidePlayer(@NotNull Player viewer, @NotNull Player target) {
-        if (modernMethodsAvailable) {
-            viewer.hidePlayer(platform.getPlugin(), target);
-        } else {
-            viewer.hidePlayer(target);
-        }
+        viewer.hidePlayer(platform.getPlugin(), target);
     }
 
     private void showPlayer(@NotNull Player viewer, @NotNull Player target) {
-        if (modernMethodsAvailable) {
-            viewer.showPlayer(platform.getPlugin(), target);
-        } else {
-            viewer.showPlayer(target);
-        }
+        viewer.showPlayer(platform.getPlugin(), target);
     }
 
     /**
