@@ -139,13 +139,6 @@ public interface Platform {
     File getDataFolder();
 
     /**
-     * Returns {@code true} if this platform is a proxy, {@code false} if not.
-     *
-     * @return  {@code true} if this platform is a proxy, {@code false} if not
-     */
-    boolean isProxy();
-
-    /**
      * Converts thhe TAB component into platform's component.
      *
      * @param   component

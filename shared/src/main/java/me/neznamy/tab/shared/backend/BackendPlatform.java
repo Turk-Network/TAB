@@ -45,11 +45,6 @@ public interface BackendPlatform extends Platform {
     }
 
     @Override
-    default boolean isProxy() {
-        return false;
-    }
-
-    @Override
     @NotNull
     default String getCommand() {
         return "tab";

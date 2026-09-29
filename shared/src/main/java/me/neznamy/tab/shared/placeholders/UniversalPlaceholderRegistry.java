@@ -196,7 +196,6 @@ public class UniversalPlaceholderRegistry {
     }
 
     private void registerPlayerPlaceholders(@NotNull PlaceholderManagerImpl manager) {
-        boolean proxy = TAB.getInstance().getPlatform().isProxy();
         manager.registerPlayerPlaceholder(TabConstants.Placeholder.GROUP, me.neznamy.tab.api.TabPlayer::getGroup);
         manager.registerPlayerPlaceholder(TabConstants.Placeholder.PING, p -> PerformanceUtil.toString(((TabPlayer)p).getPing()));
         manager.registerPlayerPlaceholder(TabConstants.Placeholder.VANISHED, p -> Boolean.toString(((TabPlayer)p).isVanished()));
@@ -204,11 +203,7 @@ public class UniversalPlaceholderRegistry {
                 p -> PerformanceUtil.toString(getWorldOnlineCounts().getOrDefault(((TabPlayer)p).world, 0)));
         manager.registerPlayerPlaceholder(TabConstants.Placeholder.SERVER_ONLINE,
                 p -> PerformanceUtil.toString(getServerOnlineCounts().getOrDefault(((TabPlayer)p).server, 0)));
-        if (proxy) {
-            manager.registerPlayerPlaceholder(TabConstants.Placeholder.GAMEMODE, -1, p -> PerformanceUtil.toString(((TabPlayer)p).getGamemode()));
-        } else {
-            manager.registerPlayerPlaceholder(TabConstants.Placeholder.GAMEMODE, p -> PerformanceUtil.toString(((TabPlayer)p).getGamemode()));
-        }
+        manager.registerPlayerPlaceholder(TabConstants.Placeholder.GAMEMODE, p -> PerformanceUtil.toString(((TabPlayer)p).getGamemode()));
         if (LuckPermsHook.getInstance().isInstalled()) {
             manager.registerPlayerPlaceholder(TabConstants.Placeholder.LUCKPERMS_PREFIX,
                     p -> LuckPermsHook.getInstance().getPrefix((TabPlayer) p));

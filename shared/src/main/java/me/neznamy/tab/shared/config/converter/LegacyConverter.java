@@ -110,9 +110,6 @@ public class LegacyConverter {
         newConfig.set("scoreboard-teams.invisible-nametags", oldConfig.getBoolean("invisible-nametags", false));
         newConfig.set("scoreboard-teams.enable-collision", oldConfig.getBoolean("enable-collision", true));
         newConfig.set("scoreboard-teams.disable-in-worlds", oldConfig.getStringList("disable-features-in-worlds.nametag", Collections.singletonList("disabledworld")));
-        if (TAB.getInstance().getPlatform().isProxy()) {
-            newConfig.set("scoreboard-teams.disable-in-servers", oldConfig.getStringList("disable-features-in-servers.nametag", Collections.singletonList("disabledserver")));
-        }
         String sortingType;
         String sortingPlaceholder;
         List<String> placeholderOrder = new ArrayList<>();
@@ -152,23 +149,17 @@ public class LegacyConverter {
     private void convertTabListFormatting(@NonNull ConfigurationFile oldConfig, @NonNull ConfigurationFile newConfig) {
         newConfig.set("tablist-name-formatting.enabled", oldConfig.getBoolean("change-tablist-prefix-suffix", true));
         newConfig.set("tablist-name-formatting.disable-in-worlds", oldConfig.getStringList("disable-features-in-worlds.tablist-names", Collections.singletonList("disabledworld")));
-        if (TAB.getInstance().getPlatform().isProxy())
-            newConfig.set("tablist-name-formatting.disable-in-servers", oldConfig.getStringList("disable-features-in-servers.tablist-names", Collections.singletonList("disabledserver")));
     }
 
     private void convertYellowNumber(@NonNull ConfigurationFile oldConfig, @NonNull ConfigurationFile newConfig) {
         newConfig.set("yellow-number-in-tablist.enabled", !oldConfig.getString("yellow-number-in-tablist", TabConstants.Placeholder.PING).isEmpty());
         newConfig.set("yellow-number-in-tablist.value", oldConfig.getString("yellow-number-in-tablist", TabConstants.Placeholder.PING));
         newConfig.set("yellow-number-in-tablist.disable-in-worlds", oldConfig.getStringList("disable-features-in-worlds.yellow-number", Collections.singletonList("disabledworld")));
-        if (TAB.getInstance().getPlatform().isProxy())
-            newConfig.set("yellow-number-in-tablist.disable-in-servers", oldConfig.getStringList("disable-features-in-servers.yellow-number", Collections.singletonList("disabledserver")));
     }
 
     private void convertBelowName(@NonNull ConfigurationFile oldConfig, @NonNull ConfigurationFile newConfig) {
         newConfig.set("belowname-objective", oldConfig.getMap("classic-vanilla-belowname"));
         newConfig.set("belowname-objective.disable-in-worlds", oldConfig.getStringList("disable-features-in-worlds.belowname", Collections.singletonList("disabledworld")));
-        if (TAB.getInstance().getPlatform().isProxy())
-            newConfig.set("belowname-objective.disable-in-servers", oldConfig.getStringList("disable-features-in-servers.belowname", Collections.singletonList("disabledserver")));
     }
 
     private void convertBossBar(@NonNull ConfigurationFile bossBar, @NonNull ConfigurationFile newConfig) {
@@ -179,15 +170,14 @@ public class LegacyConverter {
         Map<Object, Map<String, Object>> bars = bossBar.getMap("bars");
         Map<String, List<Object>> perWorldBossBars = bossBar.getMap("per-world");
         List<Object> activeBossBars = new ArrayList<>(bossBar.getStringList("default-bars", new ArrayList<>()));
-        String separator = TAB.getInstance().getPlatform().isProxy() ? "server" : "world";
         for (Map.Entry<String, List<Object>> entry : perWorldBossBars.entrySet()) {
             for (Object bar : entry.getValue()) {
                 if (!bars.containsKey(bar)) continue;
                 activeBossBars.add(bar);
                 if (bars.get(bar).containsKey("display-condition")) {
-                    bars.get(bar).put("display-condition", bars.get(bar).get("display-condition") + ";%" + separator + "%=" + entry.getKey());
+                    bars.get(bar).put("display-condition", bars.get(bar).get("display-condition") + ";%world%=" + entry.getKey());
                 } else {
-                    bars.get(bar).put("display-condition", "%" + separator + "%=" + entry.getKey());
+                    bars.get(bar).put("display-condition", "%world%=" + entry.getKey());
                 }
             }
         }
@@ -200,7 +190,6 @@ public class LegacyConverter {
     }
 
     private void convertScoreboard(@NonNull ConfigurationFile newConfig, @NonNull ConfigurationFile premiumConfig) {
-        String separator = TAB.getInstance().getPlatform().isProxy() ? "server" : "world";
         newConfig.set("scoreboard", premiumConfig.getObject("scoreboard"));
         newConfig.set("scoreboard.permission-required-to-toggle", null);
         Map<String, Map<String,Object>> scoreboards = premiumConfig.getMap("scoreboards");
@@ -213,9 +202,9 @@ public class LegacyConverter {
             if (!scoreboards.containsKey(sb)) continue;
             Map<String, Object> scoreboard = scoreboards.get(sb);
             if (scoreboard.containsKey("display-condition")) {
-                scoreboard.put("display-condition", scoreboards.get(sb).get("display-condition") + ";%" + separator + "%=" + world);
+                scoreboard.put("display-condition", scoreboards.get(sb).get("display-condition") + ";%world%=" + world);
             } else {
-                scoreboard.put("display-condition", "%" + separator + "%=" + world);
+                scoreboard.put("display-condition", "%world%=" + world);
                 //move to the top, so it's actually displayed with new priority system
                 scoreboards.remove(sb);
                 Map<String, Map<String, Object>> reordered = new HashMap<>();
@@ -251,11 +240,8 @@ public class LegacyConverter {
         newConfig.set("header-footer.header", oldConfig.getStringList("header", Collections.emptyList()));
         newConfig.set("header-footer.footer", oldConfig.getStringList("footer", Collections.emptyList()));
         newConfig.set("header-footer.disable-in-worlds", oldConfig.getStringList("disable-features-in-worlds.header-footer", Collections.singletonList("disabledworld")));
-        if (TAB.getInstance().getPlatform().isProxy())
-            newConfig.set("header-footer.disable-in-servers", oldConfig.getStringList("disable-features-in-servers.header-footer", Collections.singletonList("disabledserver")));
 
-        String separator = TAB.getInstance().getPlatform().isProxy() ? "server" : "world";
-        Map<String, Map<String, Object>> perWorldSettings = oldConfig.getMap("per-" + separator + "-settings");
+        Map<String, Map<String, Object>> perWorldSettings = oldConfig.getMap("per-world-settings");
         Map<String, Object> headerFooterMap = new LinkedHashMap<>();
         for (Map.Entry<String, Map<String, Object>> worldEntry : new LinkedHashMap<>(perWorldSettings).entrySet()) {
             Map<String, Object> headerFooter = new LinkedHashMap<>();
@@ -265,7 +251,7 @@ public class LegacyConverter {
             }
             headerFooterMap.put(translateWorldGroup(oldConfig, worldEntry.getKey()), headerFooter);
         }
-        newConfig.set("header-footer.per-" + separator, headerFooterMap);
+        newConfig.set("header-footer.per-world", headerFooterMap);
     }
 
     private void convertOtherOptions(@NonNull ConfigurationFile oldConfig, @NonNull ConfigurationFile newConfig, @Nullable ConfigurationFile premiumConfig) {
@@ -297,21 +283,14 @@ public class LegacyConverter {
         newConfig.set("mysql.username", "user");
         newConfig.set("mysql.password", "password");
 
-        if (TAB.getInstance().getPlatform().isProxy()) {
-            newConfig.set("global-playerlist", oldConfig.getMap("global-playerlist"));
-            newConfig.set("global-playerlist.update-latency", false);
-            newConfig.set("use-bukkit-permissions-manager", false);
-        } else {
-            newConfig.set("per-world-playerlist", oldConfig.getMap("per-world-playerlist"));
-        }
+        newConfig.set("per-world-playerlist", oldConfig.getMap("per-world-playerlist"));
     }
 
     private void convertGroupsAndUsers(@NonNull ConfigurationFile oldConfig, @NonNull ConfigurationFile groups, @NonNull ConfigurationFile users) {
         groups.setValues(oldConfig.getMap("Groups"));
         users.setValues(oldConfig.getMap("Users"));
 
-        String separator = TAB.getInstance().getPlatform().isProxy() ? "server" : "world";
-        Map<String,Map<String,Object>> perWorldSettings = oldConfig.getMap("per-" + separator + "-settings");
+        Map<String,Map<String,Object>> perWorldSettings = oldConfig.getMap("per-world-settings");
         Map<String,Object> groupMap = new LinkedHashMap<>();
         Map<String,Object> userMap = new LinkedHashMap<>();
         Map<String,Map<String,Object>> worldMap = new LinkedHashMap<>(perWorldSettings);
@@ -323,12 +302,12 @@ public class LegacyConverter {
                     userMap.put(translateWorldGroup(oldConfig, worldEntry.getKey()),entry2.getValue());
             }
         }
-        groups.set("per-" + separator, groupMap);
+        groups.set("per-world", groupMap);
         groups.set(TabConstants.DEFAULT_GROUP, groups.getMap("_OTHER_"));
         groups.set("_OTHER_", null);
-        users.set("per-" + separator, userMap);
-        for (Object world : groups.getMap("per-" + separator).keySet()) {
-            String gPath = "per-" + separator + "." + world;
+        users.set("per-world", userMap);
+        for (Object world : groups.getMap("per-world").keySet()) {
+            String gPath = "per-world." + world;
             if (!groups.hasConfigOption(gPath + "._OTHER_")) continue;
             groups.set(gPath + "." + TabConstants.DEFAULT_GROUP, groups.getObject(gPath + "._OTHER_"));
             groups.set(gPath + "._OTHER_", null);
