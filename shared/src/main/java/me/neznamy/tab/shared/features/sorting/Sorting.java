@@ -153,26 +153,25 @@ public class Sorting extends RefreshableFeature implements SortingManager, JoinL
      */
     @NotNull
     private String checkTeamName(@NotNull TabPlayer p, @NotNull StringBuilder currentName) {
+        // Collect taken names once instead of scanning all players for every candidate
+        String prefix = currentName.toString();
+        Set<String> takenNames = new HashSet<>();
+        for (TabPlayer all : TAB.getInstance().getOnlinePlayers()) {
+            if (all == p) continue;
+            String name = all.sortingData.shortTeamName;
+            if (name != null && name.startsWith(prefix)) takenNames.add(name);
+        }
+        if (proxy != null && nameTags != null) {
+            for (ProxyPlayer all : proxy.getProxyPlayers().values()) {
+                if (all.getNametag() == null) continue;
+                String name = all.getNametag().getResolvedTeamName();
+                if (name != null && name.startsWith(prefix)) takenNames.add(name);
+            }
+        }
         char id = 'A';
         while (true) {
-            String potentialTeamName = currentName.toString() + id;
-            boolean nameTaken = false;
-            for (TabPlayer all : TAB.getInstance().getOnlinePlayers()) {
-                if (all == p) continue;
-                if (potentialTeamName.equals(all.sortingData.shortTeamName)) {
-                    nameTaken = true;
-                    break;
-                }
-            }
-            if (!nameTaken && proxy != null && nameTags != null) {
-                for (ProxyPlayer all : proxy.getProxyPlayers().values()) {
-                    if (all.getNametag() != null && potentialTeamName.equals(all.getNametag().getResolvedTeamName())) {
-                        nameTaken = true;
-                        break;
-                    }
-                }
-            }
-            if (!nameTaken) {
+            String potentialTeamName = prefix + id;
+            if (!takenNames.contains(potentialTeamName)) {
                 return potentialTeamName;
             }
             id++;
