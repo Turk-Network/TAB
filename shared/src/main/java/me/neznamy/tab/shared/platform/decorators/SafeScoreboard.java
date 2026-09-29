@@ -49,6 +49,12 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
     /** Registered teams */
     private final Map<String, Team> teams = new ConcurrentHashMap<>();
 
+    /**
+     * Reverse index of {@link #teams}, key is team entry and value is the team it belongs to.
+     * Read from netty threads on every team packet, so it must stay O(1) instead of scanning all teams.
+     */
+    private final Map<String, Team> teamByEntry = new ConcurrentHashMap<>();
+
     @Override
     public synchronized void registerObjective(@NonNull String objectiveName, @NonNull TabComponent title,
                                         @NonNull HealthDisplay display, @Nullable TabComponent numberFormat) {
@@ -143,6 +149,9 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
         }
         Team team = new Team(createTeam(name), name, prefix, suffix, visibility, collision, players, options, color);
         teams.put(name, team);
+        for (String entry : players) {
+            teamByEntry.put(entry, team);
+        }
         if (frozen) return;
         registerTeam(team);
     }
@@ -153,6 +162,9 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
         if (team == null) {
             error("Tried to unregister non-existing team %s for player ", teamName);
             return;
+        }
+        for (String entry : team.getPlayers()) {
+            teamByEntry.remove(entry, team);
         }
         if (frozen) return;
         unregisterTeam(team);
@@ -223,6 +235,7 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
         for (String team : teams.keySet()) {
             unregisterTeam(team);
         }
+        teamByEntry.clear();
     }
 
     @Override
@@ -316,7 +329,9 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
 
     /**
      * Checks if team contains a player who should belong to a different team and if override attempt was detected,
-     * sends a warning and removes player from the collection.
+     * sends a warning and removes player from the collection.<p>
+     * Entries are only ever removed from the input, never added or reordered, so if the returned list has the
+     * same size as {@code players}, nothing was modified and the original packet can be forwarded as-is.
      *
      * @param   action
      *          Team packet action
@@ -365,18 +380,29 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
             }
         }
         if (action == TeamAction.REMOVE) {
-            allowedTeamAdds.entrySet().removeIf(entry -> entry.getValue().equals(teamName));
-            blockedTeamAdds.entrySet().removeIf(entry -> entry.getValue().equals(teamName));
+            if (!allowedTeamAdds.isEmpty()) allowedTeamAdds.values().removeIf(teamName::equals);
+            if (!blockedTeamAdds.isEmpty()) blockedTeamAdds.values().removeIf(teamName::equals);
         }
         return newList;
     }
 
+    /**
+     * Returns {@code true} if the list returned by {@link #onTeamPacket(int, String, Collection)} did not remove
+     * any entries, meaning the original packet can be forwarded without being re-created.
+     *
+     * @param   original
+     *          Entries in the original packet
+     * @param   filtered
+     *          Entries returned by {@link #onTeamPacket(int, String, Collection)}
+     * @return  {@code true} if no entries were removed, {@code false} otherwise
+     */
+    public static boolean isUnmodified(@NonNull Collection<String> original, @NonNull Collection<String> filtered) {
+        return original.size() == filtered.size();
+    }
+
     @Nullable
     private Team getExpectedTeam(@NotNull String player) {
-        for (Team team : teams.values()) {
-            if (team.getPlayers().contains(player)) return team;
-        }
-        return null;
+        return teamByEntry.get(player);
     }
 
     /**

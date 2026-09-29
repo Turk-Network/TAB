@@ -18,6 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Constructor;
 import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -152,12 +153,9 @@ public class NMSPacketScoreboard extends SafeScoreboard<BukkitTabPlayer> {
             if (action != TeamAction.UPDATE) {
                 Collection<String> players = team.getPlayers();
                 if (players != null) {
-                    return teamConstructor.newInstance(
-                            team.getName(),
-                            action,
-                            team.getParameters(),
-                            onTeamPacket(action, team.getName(), players)
-                    );
+                    List<String> filtered = onTeamPacket(action, team.getName(), players);
+                    if (isUnmodified(players, filtered)) return packet;
+                    return teamConstructor.newInstance(team.getName(), action, team.getParameters(), filtered);
                 }
             }
         }

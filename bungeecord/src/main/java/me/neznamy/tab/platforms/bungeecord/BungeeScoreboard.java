@@ -1,6 +1,5 @@
 package me.neznamy.tab.platforms.bungeecord;
 
-import com.google.common.collect.Lists;
 import lombok.NonNull;
 import me.neznamy.tab.shared.Limitations;
 import me.neznamy.tab.shared.ProtocolVersion;
@@ -18,6 +17,7 @@ import net.md_5.bungee.protocol.util.Either;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -166,8 +166,9 @@ public class BungeeScoreboard extends SafeScoreboard<BungeeTabPlayer> {
         if (packet instanceof net.md_5.bungee.protocol.packet.Team) {
             net.md_5.bungee.protocol.packet.Team team = (net.md_5.bungee.protocol.packet.Team) packet;
             if (team.getMode() != TeamAction.UPDATE) {
-                List<String> players = team.getPlayers() == null ? Collections.emptyList() : Lists.newArrayList(team.getPlayers());
-                team.setPlayers(onTeamPacket(team.getMode(), team.getName(), players).toArray(new String[0]));
+                List<String> players = team.getPlayers() == null ? Collections.emptyList() : Arrays.asList(team.getPlayers());
+                List<String> filtered = onTeamPacket(team.getMode(), team.getName(), players);
+                if (!isUnmodified(players, filtered)) team.setPlayers(filtered.toArray(new String[0]));
             }
         }
         return packet;

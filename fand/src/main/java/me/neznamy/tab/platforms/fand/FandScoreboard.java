@@ -201,7 +201,7 @@ public final class FandScoreboard extends SafeScoreboard<FandTabPlayer> {
             players.add(playerName);
         }
         Collection<String> replacement = onTeamPacket(packet.method(), packet.name(), players);
-        if (players.equals(replacement)) {
+        if (isUnmodified(players, replacement)) {
             return packet;
         }
         return packet.with(

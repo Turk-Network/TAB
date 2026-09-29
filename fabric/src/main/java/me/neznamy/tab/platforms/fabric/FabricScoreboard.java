@@ -14,6 +14,7 @@ import net.minecraft.world.scores.criteria.ObjectiveCriteria.RenderType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 /**
@@ -133,12 +134,9 @@ public class FabricScoreboard extends SafeScoreboard<FabricTabPlayer> {
         if (packet instanceof ClientboundSetPlayerTeamPacket team) {
             int method = getMethod(team);
             if (method != TeamAction.UPDATE) {
-                return new ClientboundSetPlayerTeamPacket(
-                        team.getName(),
-                        method,
-                        team.getParameters(),
-                        onTeamPacket(method, team.getName(), team.getPlayers())
-                );
+                List<String> filtered = onTeamPacket(method, team.getName(), team.getPlayers());
+                if (isUnmodified(team.getPlayers(), filtered)) return packet;
+                return new ClientboundSetPlayerTeamPacket(team.getName(), method, team.getParameters(), filtered);
             }
         }
         return packet;
