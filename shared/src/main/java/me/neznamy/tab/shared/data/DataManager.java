@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -16,13 +17,19 @@ import java.util.regex.PatternSyntaxException;
 public class DataManager {
 
     /** Map of all servers, indexed by their name */
-    private final Map<String, Server> servers = new HashMap<>();
+    private final Map<String, Server> servers = new ConcurrentHashMap<>();
 
     /** Map of all server groups defined in global playerlist configuration */
     private final Map<String, ServerGroup> serverGroups = new HashMap<>();
 
     /** Map of all worlds, indexed by their name */
-    private final Map<String, World> worlds = new HashMap<>();
+    private final Map<String, World> worlds = new ConcurrentHashMap<>();
+
+    /** Marker for regex patterns that failed to compile */
+    private static final Pattern INVALID_PATTERN = Pattern.compile("");
+
+    /** Compiled "regex:" patterns to avoid compiling them on every call */
+    private final Map<String, Pattern> compiledPatterns = new ConcurrentHashMap<>();
 
     /** Global playerlist configuration, null if not loaded yet or feature is disabled */
     @Nullable
@@ -91,12 +98,18 @@ public class DataManager {
      */
     public boolean matchesPattern(@NotNull String objectName, @NotNull String pattern) {
         if (pattern.startsWith("regex:")) {
-            try {
-                return Pattern.compile(pattern.substring(6)).matcher(objectName).matches();
-            } catch (PatternSyntaxException e) {
+            Pattern compiled = compiledPatterns.computeIfAbsent(pattern, p -> {
+                try {
+                    return Pattern.compile(p.substring(6));
+                } catch (PatternSyntaxException e) {
+                    return INVALID_PATTERN;
+                }
+            });
+            if (compiled == INVALID_PATTERN) {
                 // Invalid regex pattern, treat as literal match
                 return objectName.equals(pattern);
             }
+            return compiled.matcher(objectName).matches();
         } else if (pattern.endsWith("*")) {
             return objectName.startsWith(pattern.substring(0, pattern.length()-1));
         } else if (pattern.startsWith("*")) {

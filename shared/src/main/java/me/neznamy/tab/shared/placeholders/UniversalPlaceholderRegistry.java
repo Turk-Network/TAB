@@ -4,6 +4,7 @@ import lombok.Getter;
 import me.neznamy.tab.shared.TAB;
 import me.neznamy.tab.shared.TabConstants;
 import me.neznamy.tab.shared.data.Server;
+import me.neznamy.tab.shared.data.World;
 import me.neznamy.tab.shared.features.PlaceholderManagerImpl;
 import me.neznamy.tab.shared.features.proxy.ProxyPlayer;
 import me.neznamy.tab.shared.features.proxy.ProxySupport;
@@ -18,7 +19,10 @@ import org.jetbrains.annotations.NotNull;
 
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
@@ -31,6 +35,14 @@ public class UniversalPlaceholderRegistry {
 
     /** Decimal formatter for 2 decimal places */
     private final DecimalFormat decimal2;
+
+    /** Cached per-world online counts and time when they were computed */
+    private volatile Map<World, Integer> worldOnlineCounts = Collections.emptyMap();
+    private volatile long worldOnlineCountsTime;
+
+    /** Cached per-server online counts and time when they were computed */
+    private volatile Map<Server, Integer> serverOnlineCounts = Collections.emptyMap();
+    private volatile long serverOnlineCountsTime;
 
     /**
      * Constructs new instance.
@@ -135,31 +147,63 @@ public class UniversalPlaceholderRegistry {
         });
     }
 
+    /**
+     * Returns amount of non-vanished players in each world. The result is computed at most once per placeholder
+     * refresh cycle instead of iterating over all players for every single player (O(N^2)).
+     *
+     * @return  Map of worlds and amount of non-vanished players in them
+     */
+    @NotNull
+    private Map<World, Integer> getWorldOnlineCounts() {
+        long now = System.currentTimeMillis();
+        Map<World, Integer> counts = worldOnlineCounts;
+        if (now - worldOnlineCountsTime >= TabConstants.Placeholder.MINIMUM_REFRESH_INTERVAL) {
+            counts = new HashMap<>();
+            for (TabPlayer player : TAB.getInstance().getOnlinePlayers()) {
+                if (!player.isVanished()) counts.merge(player.world, 1, Integer::sum);
+            }
+            worldOnlineCounts = counts;
+            worldOnlineCountsTime = now;
+        }
+        return counts;
+    }
+
+    /**
+     * Returns amount of non-vanished players on each server, including proxy players. The result is computed
+     * at most once per placeholder refresh cycle instead of iterating over all players for every single player (O(N^2)).
+     *
+     * @return  Map of servers and amount of non-vanished players on them
+     */
+    @NotNull
+    private Map<Server, Integer> getServerOnlineCounts() {
+        long now = System.currentTimeMillis();
+        Map<Server, Integer> counts = serverOnlineCounts;
+        if (now - serverOnlineCountsTime >= TabConstants.Placeholder.MINIMUM_REFRESH_INTERVAL) {
+            counts = new HashMap<>();
+            for (TabPlayer player : TAB.getInstance().getOnlinePlayers()) {
+                if (!player.isVanished()) counts.merge(player.server, 1, Integer::sum);
+            }
+            ProxySupport proxySupport = TAB.getInstance().getFeatureManager().getFeature(TabConstants.Feature.PROXY_SUPPORT);
+            if (proxySupport != null) {
+                for (ProxyPlayer player : proxySupport.getProxyPlayers().values()) {
+                    if (!player.isVanished()) counts.merge(player.server, 1, Integer::sum);
+                }
+            }
+            serverOnlineCounts = counts;
+            serverOnlineCountsTime = now;
+        }
+        return counts;
+    }
+
     private void registerPlayerPlaceholders(@NotNull PlaceholderManagerImpl manager) {
         boolean proxy = TAB.getInstance().getPlatform().isProxy();
         manager.registerPlayerPlaceholder(TabConstants.Placeholder.GROUP, me.neznamy.tab.api.TabPlayer::getGroup);
         manager.registerPlayerPlaceholder(TabConstants.Placeholder.PING, p -> PerformanceUtil.toString(((TabPlayer)p).getPing()));
         manager.registerPlayerPlaceholder(TabConstants.Placeholder.VANISHED, p -> Boolean.toString(((TabPlayer)p).isVanished()));
-        manager.registerPlayerPlaceholder(TabConstants.Placeholder.WORLD_ONLINE, p -> {
-            int count = 0;
-            for (TabPlayer player : TAB.getInstance().getOnlinePlayers()) {
-                if (((TabPlayer)p).world == player.world && !player.isVanished()) count++;
-            }
-            return PerformanceUtil.toString(count);
-        });
-        manager.registerPlayerPlaceholder(TabConstants.Placeholder.SERVER_ONLINE, p -> {
-            int count = 0;
-            for (TabPlayer player : TAB.getInstance().getOnlinePlayers()) {
-                if (((TabPlayer)p).server == player.server && !player.isVanished()) count++;
-            }
-            ProxySupport proxySupport = TAB.getInstance().getFeatureManager().getFeature(TabConstants.Feature.PROXY_SUPPORT);
-            if (proxySupport != null) {
-                for (ProxyPlayer player : proxySupport.getProxyPlayers().values()) {
-                    if (((TabPlayer)p).server == player.server && !player.isVanished()) count++;
-                }
-            }
-            return PerformanceUtil.toString(count);
-        });
+        manager.registerPlayerPlaceholder(TabConstants.Placeholder.WORLD_ONLINE,
+                p -> PerformanceUtil.toString(getWorldOnlineCounts().getOrDefault(((TabPlayer)p).world, 0)));
+        manager.registerPlayerPlaceholder(TabConstants.Placeholder.SERVER_ONLINE,
+                p -> PerformanceUtil.toString(getServerOnlineCounts().getOrDefault(((TabPlayer)p).server, 0)));
         if (proxy) {
             manager.registerPlayerPlaceholder(TabConstants.Placeholder.GAMEMODE, -1, p -> PerformanceUtil.toString(((TabPlayer)p).getGamemode()));
         } else {
