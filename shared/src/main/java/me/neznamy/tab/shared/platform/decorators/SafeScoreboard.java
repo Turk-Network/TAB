@@ -100,6 +100,7 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
             error("Tried to modify non-existing objective %s for player ", objectiveName);
             return;
         }
+        if (objective.title == title && objective.healthDisplay == display && objective.numberFormat == numberFormat) return; // Nothing changed
         objective.update(title, display, numberFormat);
         if (frozen) return;
         updateObjective(objective);
@@ -118,6 +119,7 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
             score = new Score(objective, scoreHolder, value, displayName, numberFormat);
             objective.getScores().put(scoreHolder, score);
         } else {
+            if (score.value == value && score.displayName == displayName && score.numberFormat == numberFormat) return; // Nothing changed
             score.update(value, displayName, numberFormat);
         }
         if (frozen) return;
@@ -179,6 +181,8 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
             error("Tried to modify non-existing team %s for player ", name);
             return;
         }
+        if (team.prefix == prefix && team.suffix == suffix && team.visibility == visibility && team.collision == collision
+                && team.options == options && team.color == color) return; // Nothing changed
         team.update(prefix, suffix, visibility, collision, options, color);
         if (frozen) return;
         updateTeam(team);
@@ -188,6 +192,7 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
     public synchronized void updateTeam(@NonNull String name, @NonNull TabComponent prefix, @NonNull TabComponent suffix, @NonNull EnumChatFormat color) {
         Team team = teams.get(name);
         if (team == null) return;
+        if (team.prefix == prefix && team.suffix == suffix && team.color == color) return; // Nothing changed
         team.update(prefix, suffix, color);
         if (frozen) return;
         updateTeam(team);
@@ -196,7 +201,7 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
     @Override
     public synchronized void updateTeam(@NonNull String name, @NonNull CollisionRule collision) {
         Team team = teams.get(name);
-        if (team == null) return;
+        if (team == null || team.collision == collision) return;
         team.collision = collision;
         if (frozen) return;
         updateTeam(team);
@@ -205,7 +210,7 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
     @Override
     public synchronized void updateTeam(@NonNull String name, @NonNull NameVisibility visibility) {
         Team team = teams.get(name);
-        if (team == null) return;
+        if (team == null || team.visibility == visibility) return;
         team.visibility = visibility;
         if (frozen) return;
         updateTeam(team);
