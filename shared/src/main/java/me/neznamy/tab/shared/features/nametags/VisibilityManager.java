@@ -272,12 +272,25 @@ public class VisibilityManager extends RefreshableFeature implements JoinListene
 
     private void requestOpaqueOcclusionRefresh() {
         List<OpaqueVisibilityCheck> checks = new ArrayList<>();
-        for (TabPlayer player : nameTags.getOnlinePlayers().getPlayers()) {
+        List<OpaqueVisibilityResult> knownResults = new ArrayList<>();
+        TabPlayer[] players = nameTags.getOnlinePlayers().getPlayers();
+        for (TabPlayer player : players) {
             if (!hasOpaqueNameTagMode(player) || player.teamData.isDisabled()) continue;
-            for (TabPlayer viewer : nameTags.getOnlinePlayers().getPlayers()) {
-                checks.add(new OpaqueVisibilityCheck(player, viewer, !isOpaqueNameTagMode(player, viewer)));
+            for (TabPlayer viewer : players) {
+                // Resolve everything that does not need a raycast here instead of creating N^2 checks for the main thread
+                boolean hidden = player.teamData.hasHiddenNametag(viewer, NameTagInvisibilityReason.OPAQUE_OCCLUSION);
+                if (viewer == player || !isOpaqueNameTagMode(player, viewer)) {
+                    if (hidden) knownResults.add(new OpaqueVisibilityResult(player, viewer, true));
+                    continue;
+                }
+                if (!viewer.server.canSee(player.server) || viewer.world != player.world || !viewer.canSee(player)) {
+                    if (!hidden) knownResults.add(new OpaqueVisibilityResult(player, viewer, false));
+                    continue;
+                }
+                checks.add(new OpaqueVisibilityCheck(player, viewer));
             }
         }
+        if (!knownResults.isEmpty()) applyOpaqueOcclusionResults(knownResults);
         if (checks.isEmpty()) return;
         TAB.getInstance().getPlatform().runSyncGlobal(() -> {
             List<OpaqueVisibilityResult> results = new ArrayList<>(checks.size());
@@ -286,8 +299,7 @@ public class VisibilityManager extends RefreshableFeature implements JoinListene
                     results.add(new OpaqueVisibilityResult(check.player, check.viewer, true));
                     continue;
                 }
-                results.add(new OpaqueVisibilityResult(check.player, check.viewer,
-                        check.forceVisible || check.viewer == check.player || hasLineOfSight(check.viewer, check.player)));
+                results.add(new OpaqueVisibilityResult(check.player, check.viewer, hasLineOfSight(check.viewer, check.player)));
             }
             getCustomThread().execute(new TimedCaughtTask(TAB.getInstance().getCpu(),
                     () -> applyOpaqueOcclusionResults(results), getFeatureName(), "Applying opaque nametag occlusion"));
@@ -344,12 +356,10 @@ public class VisibilityManager extends RefreshableFeature implements JoinListene
 
         @NotNull private final TabPlayer player;
         @NotNull private final TabPlayer viewer;
-        private final boolean forceVisible;
 
-        private OpaqueVisibilityCheck(@NotNull TabPlayer player, @NotNull TabPlayer viewer, boolean forceVisible) {
+        private OpaqueVisibilityCheck(@NotNull TabPlayer player, @NotNull TabPlayer viewer) {
             this.player = player;
             this.viewer = viewer;
-            this.forceVisible = forceVisible;
         }
     }
 

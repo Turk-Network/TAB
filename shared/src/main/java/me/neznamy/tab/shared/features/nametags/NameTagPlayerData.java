@@ -158,7 +158,8 @@ public class NameTagPlayerData {
      * @return  Whether the state has changed as a result of this call
      */
     public boolean showNametag(@NotNull TabPlayer viewer, @NotNull NameTagInvisibilityReason reason) {
-        return nameTagInvisibilityReasonsRelational.computeIfAbsent(viewer, v -> EnumSet.noneOf(NameTagInvisibilityReason.class)).remove(reason);
+        EnumSet<NameTagInvisibilityReason> reasons = nameTagInvisibilityReasonsRelational.get(viewer);
+        return reasons != null && reasons.remove(reason);
     }
 
     /**
