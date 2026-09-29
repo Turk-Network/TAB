@@ -32,7 +32,11 @@ public class NickCompatibility extends TabFeature implements EntryAddListener {
     @Nullable private final YellowNumber yellownumber = TAB.getInstance().getFeatureManager().getFeature(TabConstants.Feature.YELLOW_NUMBER);
     @Nullable private final ProxySupport proxy = TAB.getInstance().getFeatureManager().getFeature(TabConstants.Feature.PROXY_SUPPORT);
 
-    public synchronized void onEntryAdd(TabPlayer packetReceiver, UUID id, String name) {
+    /**
+     * Called from netty threads of all players for every added tablist entry, so the common path
+     * (name not changed) must not lock. Only the rare name change path synchronizes on the changed player.
+     */
+    public void onEntryAdd(TabPlayer packetReceiver, UUID id, String name) {
         TabPlayer packetPlayer = TAB.getInstance().getPlayerByTabListUUID(id);
         // Using "packetPlayer == packetReceiver" for now, as this should technically not matter, but it does
         // A nick plugin author said the nickname will be different for other players but same for nicking player,
@@ -49,7 +53,9 @@ public class NickCompatibility extends TabFeature implements EntryAddListener {
         if (proxy != null) {
             ProxyPlayer proxyPlayer = proxy.getProxyPlayers().get(id);
             if (proxyPlayer == null) return;
-            if (!proxyPlayer.getNickname().equals(name)) {
+            if (proxyPlayer.getNickname().equals(name)) return;
+            synchronized (proxyPlayer) {
+                if (proxyPlayer.getNickname().equals(name)) return; // Already processed by another thread
                 proxyPlayer.setNickname(name);
                 TAB.getInstance().debug("[Proxy Support] Processing name change of proxy player " + proxyPlayer.getName() + " to " + name);
                 processNameChange(proxyPlayer);
