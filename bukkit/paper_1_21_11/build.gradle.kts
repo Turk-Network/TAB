@@ -22,7 +22,3 @@ dependencies {
     paperweight.paperDevBundle(version)
     compileOnly("io.papermc.paper:paper-api:${version}")
 }
-
-tasks.compileJava {
-    options.release.set(21)
-}

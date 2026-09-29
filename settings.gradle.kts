@@ -21,6 +21,11 @@ pluginManagement {
     }
 }
 
+plugins {
+    // Downloads JDKs required by toolchains (Java 25 for the project, Java 21 for Paper 1.21.x paperweight) if missing
+    id("org.gradle.toolchains.foojay-resolver-convention") version "1.0.0"
+}
+
 rootProject.name = "TAB"
 
 include(":api")

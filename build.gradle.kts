@@ -32,6 +32,19 @@ val platformPaths = setOf(
     ":bukkit:v26_2"
 )
 
+/**
+ * Paper 1.21.x modules. They target Java 21, and the remappers used by their dev bundles cannot read
+ * Java 25 class files, so paperweight must run on Java 21 as well instead of the Java 25 project toolchain.
+ */
+val paper121JavaVersion = 21
+val paper121Paths = setOf(
+    ":bukkit:paper_1_21",
+    ":bukkit:paper_1_21_2",
+    ":bukkit:paper_1_21_4",
+    ":bukkit:paper_1_21_9",
+    ":bukkit:paper_1_21_11"
+)
+
 val specialPaths = setOf(
     ":api",
     ":shared"
@@ -42,5 +55,18 @@ subprojects {
         in platformPaths -> plugins.apply("tab.platform-conventions")
         in specialPaths -> plugins.apply("tab.standard-conventions")
         else -> plugins.apply("tab.base-conventions")
+    }
+    if (path in paper121Paths) {
+        plugins.withId("io.papermc.paperweight.userdev") {
+            tasks.named<JavaCompile>("compileJava") {
+                options.release.set(paper121JavaVersion)
+            }
+            @Suppress("UNCHECKED_CAST")
+            val paperweightLauncher = extensions.getByName("paperweight")
+                .withGroovyBuilder { getProperty("javaLauncher") } as Property<JavaLauncher>
+            paperweightLauncher.set(extensions.getByType<JavaToolchainService>().launcherFor {
+                languageVersion.set(JavaLanguageVersion.of(paper121JavaVersion))
+            })
+        }
     }
 }

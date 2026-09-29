@@ -22,12 +22,3 @@ dependencies {
     paperweight.paperDevBundle(version)
     compileOnly("io.papermc.paper:paper-api:${version}")
 }
-
-tasks.compileJava {
-    options.release.set(21)
-}
-
-// The remapper used by this dev bundle cannot read Java 25 class files, run paperweight with Java 21
-paperweight.javaLauncher.set(javaToolchains.launcherFor {
-    languageVersion.set(JavaLanguageVersion.of(21))
-})
