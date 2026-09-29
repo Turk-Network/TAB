@@ -110,6 +110,14 @@ public class NMSPacketTabList extends TrackedTabList<BukkitTabPlayer> {
         }
         if (packet instanceof ClientboundPlayerInfoUpdatePacket info) {
             EnumSet<ClientboundPlayerInfoUpdatePacket.Action> actions = info.actions();
+            // Fast path: skip iterating and copying entries if there is nothing to check or rewrite
+            if (!actions.contains(ClientboundPlayerInfoUpdatePacket.Action.ADD_PLAYER)
+                    && (getForcedDisplayNames().isEmpty() || !actions.contains(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME))
+                    && (getBlockedSpectators().isEmpty() || !actions.contains(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_GAME_MODE))
+                    && (getForcedLatency() == null || !actions.contains(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LATENCY))
+                    && (!allPlayersHidden || !actions.contains(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_LISTED))) {
+                return packet;
+            }
             List<ClientboundPlayerInfoUpdatePacket.Entry> updatedList = new ArrayList<>();
             boolean rewritePacket = false;
             for (ClientboundPlayerInfoUpdatePacket.Entry nmsData : info.entries()) {

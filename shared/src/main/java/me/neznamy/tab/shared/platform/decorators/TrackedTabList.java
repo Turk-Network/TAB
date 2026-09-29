@@ -30,7 +30,7 @@ public abstract class TrackedTabList<P extends TabPlayer> implements TabList {
     /** Forced latency for all entries*/
     @Getter
     @Setter
-    private static Integer forcedLatency;
+    private static volatile Integer forcedLatency;
 
     /** Player this tablist belongs to */
     protected final P player;
@@ -39,7 +39,7 @@ public abstract class TrackedTabList<P extends TabPlayer> implements TabList {
     private final Map<UUID, TabComponent> forcedDisplayNames = new ConcurrentHashMap<>();
 
     /** Players to change to survival gamemode instead of spectator */
-    private final Set<UUID> blockedSpectators = Collections.synchronizedSet(new HashSet<>());
+    private final Set<UUID> blockedSpectators = ConcurrentHashMap.newKeySet();
 
     /** Header sent by the plugin */
     @Nullable
@@ -50,7 +50,7 @@ public abstract class TrackedTabList<P extends TabPlayer> implements TabList {
     protected TabComponent footer;
 
     /** Flag tracking whether all real players should be hidden or not */
-    protected boolean allPlayersHidden;
+    protected volatile boolean allPlayersHidden;
 
     @Override
     public void updateDisplayName(@NonNull UUID entry, @Nullable TabComponent displayName) {
