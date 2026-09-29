@@ -27,8 +27,14 @@ import java.util.concurrent.ConcurrentHashMap;
 @Setter
 public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard {
 
-    /** Static to prevent spam when packet is sent to each player */
-    private static String lastTeamOverrideMessage;
+    /** Maximum amount of remembered anti-override messages before they are forgotten and may be logged again */
+    private static final int MAX_LOGGED_TEAM_OVERRIDES = 1000;
+
+    /**
+     * Already logged anti-override messages. Static to prevent spam when packet is sent to each player,
+     * concurrent because it is accessed from netty threads of all players.
+     */
+    private static final Set<String> loggedTeamOverrides = ConcurrentHashMap.newKeySet();
 
     /** Player this scoreboard belongs to */
     @Getter
@@ -439,8 +445,8 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
             message += " Source of the team: " + source + ". To fix this, " + fix;
         }
         //not logging the same message for every online player who received the packet
-        if (!message.equals(lastTeamOverrideMessage)) {
-            lastTeamOverrideMessage = message;
+        if (loggedTeamOverrides.size() >= MAX_LOGGED_TEAM_OVERRIDES) loggedTeamOverrides.clear();
+        if (loggedTeamOverrides.add(message)) {
             TAB.getInstance().getErrorManager().logAntiOverride(message);
         }
     }

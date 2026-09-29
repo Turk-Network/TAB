@@ -341,6 +341,8 @@ public class ErrorManager {
      *          message to print
      */
     public void logAntiOverride(@NotNull String message) {
-        printError(message, Collections.emptyList(), false, antiOverrideLog);
+        // Called from netty threads, do not block them with file I/O and a global lock
+        TAB.getInstance().getCpu().getProcessingThread().execute(
+                () -> printError(message, Collections.emptyList(), false, antiOverrideLog));
     }
 }
