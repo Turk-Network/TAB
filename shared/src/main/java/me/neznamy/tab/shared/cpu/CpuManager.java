@@ -40,13 +40,6 @@ public class CpuManager {
     /** Scheduler for checking for tablist entry values */
     private final ThreadExecutor tablistEntryCheckThread = new ThreadExecutor("TAB TabList Entry Checker Thread");
 
-    /** Scheduler for encoding and sending plugin messages */
-    @Getter
-    private static final ThreadExecutor pluginMessageEncodeThread = new ThreadExecutor("TAB Plugin Message Encoding Thread");
-
-    /** Scheduler for decoding plugin messages */
-    private final ThreadExecutor pluginMessageDecodeThread = new ThreadExecutor("TAB Plugin Message Decoding Thread");
-
     /** Scheduler for MySQL tasks */
     private final ThreadExecutor mysqlThread = new ThreadExecutor("TAB MySQL Thread");
 
@@ -84,7 +77,6 @@ public class CpuManager {
         placeholderThread.shutdown();
         groupRefreshingThread.shutdown();
         tablistEntryCheckThread.shutdown();
-        pluginMessageDecodeThread.shutdown();
         mysqlThread.shutdown();
     }
 

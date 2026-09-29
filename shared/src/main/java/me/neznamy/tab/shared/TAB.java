@@ -26,7 +26,6 @@ import me.neznamy.tab.shared.features.nametags.NameTag;
 import me.neznamy.tab.shared.platform.Platform;
 import me.neznamy.tab.shared.platform.TabListEntryTracker;
 import me.neznamy.tab.shared.platform.TabPlayer;
-import me.neznamy.tab.shared.proxy.ProxyPlatform;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.yaml.snakeyaml.error.YAMLException;
@@ -152,9 +151,6 @@ public class TAB extends TabAPI {
         platform.registerListener();
         platform.registerCommand();
         platform.startMetrics();
-        if (platform instanceof ProxyPlatform) {
-            ((ProxyPlatform) platform).registerChannel();
-        }
     }
 
     /**

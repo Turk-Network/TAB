@@ -61,7 +61,6 @@ public class Config {
     @NotNull private final ComponentConfiguration components;
 
     private final boolean preventSpectatorEffect = config.getBoolean("prevent-spectator-effect.enabled", false);
-    private final boolean bukkitPermissions = TAB.getInstance().getPlatform().isProxy() && config.getBoolean("use-bukkit-permissions-manager", false);
     private final boolean debugMode = config.getBoolean("debug", false);
     private final boolean onlineUuidInTabList = config.getBoolean("use-online-uuid-in-tablist", true);
     private final boolean pipelineInjection = getSecretOption("pipeline-injection", true);

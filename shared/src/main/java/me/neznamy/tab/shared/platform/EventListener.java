@@ -1,10 +1,7 @@
 package me.neznamy.tab.shared.platform;
 
 import me.neznamy.tab.shared.TAB;
-import me.neznamy.tab.shared.TabConstants.CpuUsageCategory;
-import me.neznamy.tab.shared.cpu.TimedCaughtTask;
 import me.neznamy.tab.shared.data.World;
-import me.neznamy.tab.shared.task.PluginMessageDecodeTask;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
@@ -53,19 +50,6 @@ public interface EventListener<T> {
         if (TAB.getInstance().isPluginDisabled()) return;
         TAB.getInstance().getCPUManager().runTask(() ->
                 TAB.getInstance().getFeatureManager().onWorldChange(player, World.byName(world)));
-    }
-
-    /**
-     * Processes plugin message.
-     *
-     * @param   player
-     *          UUID of player who received message
-     * @param   message
-     *          The message
-     */
-    default void pluginMessage(@NotNull UUID player, byte[] message) {
-        TAB.getInstance().getCpu().getPluginMessageDecodeThread().execute(new TimedCaughtTask(TAB.getInstance().getCpu(), new PluginMessageDecodeTask(player, message),
-                "Plugin message handling", CpuUsageCategory.PLUGIN_MESSAGE_DECODE));
     }
 
     /**

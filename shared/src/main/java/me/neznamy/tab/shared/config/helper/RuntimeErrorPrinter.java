@@ -7,7 +7,6 @@ import me.neznamy.tab.shared.chat.TabTextColor;
 import me.neznamy.tab.shared.chat.component.TabTextComponent;
 import me.neznamy.tab.shared.features.sorting.types.SortingType;
 import me.neznamy.tab.shared.platform.TabPlayer;
-import me.neznamy.tab.shared.proxy.ProxyTabPlayer;
 
 import java.util.Collection;
 
@@ -37,7 +36,6 @@ public class RuntimeErrorPrinter {
                                         @NonNull String configuredValue, @NonNull TabPlayer player,
                                         @NonNull String property, @NonNull String expectation) {
         // Placeholders are not initialized, because bridge did not respond yet (typically on join)
-        if (player instanceof ProxyTabPlayer && !((ProxyTabPlayer)player).isBridgeConnected()) return;
 
         if (configuredValue.contains("%")) {
             error(String.format("Placeholder \"%s\" used in %s of BossBar \"%s\" returned \"%s\" for player %s, which cannot be evaluated to %s.",
@@ -64,7 +62,6 @@ public class RuntimeErrorPrinter {
     public void invalidInputForNumericSorting(@NonNull SortingType type, @NonNull String placeholder,
                                               @NonNull String output, @NonNull TabPlayer player) {
         // Placeholders are not initialized, because bridge did not respond yet (typically on join)
-        if (player instanceof ProxyTabPlayer && !((ProxyTabPlayer)player).isBridgeConnected()) return;
 
         error(String.format("Placeholder %s used in sorting type %s returned \"%s\" for player %s, which is not a valid number.",
                 placeholder, type.getDisplayName(), output, player.getName()));
@@ -82,7 +79,6 @@ public class RuntimeErrorPrinter {
      */
     public void invalidNumberForCondition(@NonNull String placeholder, @NonNull String output, @NonNull TabPlayer player) {
         // Placeholders are not initialized, because bridge did not respond yet (typically on join)
-        if (player instanceof ProxyTabPlayer && !((ProxyTabPlayer)player).isBridgeConnected()) return;
 
         error(String.format("Placeholder %s used in a numeric condition returned \"%s\" for player %s, which is not a valid number.",
                 placeholder, output, player.getName()));
@@ -90,7 +86,6 @@ public class RuntimeErrorPrinter {
 
     public void invalidNumberForBelowName(@NonNull TabPlayer target, @NonNull String configuredValue, @NonNull String output) {
         // Placeholders are not initialized, because bridge did not respond yet (typically on join)
-        if (target instanceof ProxyTabPlayer && !((ProxyTabPlayer)target).isBridgeConnected()) return;
 
         String msg = String.format("Belowname value is configured to show \"%s\", but returned \"%s\" for player %s, which cannot be evaluated to a number.",
                 configuredValue, output, target.getName());
@@ -102,7 +97,6 @@ public class RuntimeErrorPrinter {
 
     public void floatInBelowName(@NonNull TabPlayer target, @NonNull String configuredValue, @NonNull String output) {
         // Placeholders are not initialized, because bridge did not respond yet (typically on join)
-        if (target instanceof ProxyTabPlayer && !((ProxyTabPlayer)target).isBridgeConnected()) return;
 
         error(String.format("Belowname value is configured to show \"%s\", but returned \"%s\" " +
                         "for player %s, which is a decimal number. Truncating to an integer.",
@@ -111,7 +105,6 @@ public class RuntimeErrorPrinter {
 
     public void invalidNumberForPlayerlistObjective(@NonNull TabPlayer target, @NonNull String configuredValue, @NonNull String output) {
         // Placeholders are not initialized, because bridge did not respond yet (typically on join)
-        if (target instanceof ProxyTabPlayer && !((ProxyTabPlayer)target).isBridgeConnected()) return;
 
         String msg = String.format("Playerlist objective value is configured to show \"%s\", but returned \"%s\" for player %s, which cannot be evaluated to a number.",
                 configuredValue, output, target.getName());
@@ -123,7 +116,6 @@ public class RuntimeErrorPrinter {
 
     public void floatInPlayerlistObjective(@NonNull TabPlayer target, @NonNull String configuredValue, @NonNull String output) {
         // Placeholders are not initialized, because bridge did not respond yet (typically on join)
-        if (target instanceof ProxyTabPlayer && !((ProxyTabPlayer)target).isBridgeConnected()) return;
 
         error(String.format("Playerlist objective value is configured to show \"%s\", but returned \"%s\" " +
                         "for player %s, which is a decimal number. Truncating to an integer.",
@@ -142,7 +134,6 @@ public class RuntimeErrorPrinter {
      */
     public void groupNotInSortingList(@NonNull Collection<String> list, @NonNull String group, @NonNull TabPlayer player) {
         // Ignore if groups are taken from bridge and it did not respond yet
-        if (player instanceof ProxyTabPlayer && !((ProxyTabPlayer)player).isBridgeConnected()) return;
 
         error(String.format("Player %s's group (%s) is not in sorting list! Sorting list: %s. Player will be sorted on the bottom.",
                 player.getName(), group, String.join(",", list)));

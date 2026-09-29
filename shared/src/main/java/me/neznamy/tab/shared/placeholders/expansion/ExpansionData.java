@@ -1,10 +1,7 @@
 package me.neznamy.tab.shared.placeholders.expansion;
 
 import lombok.RequiredArgsConstructor;
-import me.neznamy.tab.shared.TAB;
 import me.neznamy.tab.shared.platform.TabPlayer;
-import me.neznamy.tab.shared.proxy.ProxyTabPlayer;
-import me.neznamy.tab.shared.proxy.message.outgoing.ExpansionPlaceholder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -110,10 +107,7 @@ public class ExpansionData {
      *          Placeholder value
      */
     private void setValue(@NotNull String key, @NotNull String value) {
-        if (value.equals(data.put(key, value))) return; // Value did not change, do not send a plugin message
-        if (player instanceof ProxyTabPlayer && TAB.getInstance().getConfiguration().getConfig().getPlaceholders().isRegisterTabExpansion()) {
-            ((ProxyTabPlayer)player).sendPluginMessage(new ExpansionPlaceholder(key, value));
-        }
+        data.put(key, value);
     }
 
     /**
@@ -126,16 +120,5 @@ public class ExpansionData {
     @Nullable
     public String getValue(@NotNull String key) {
         return data.get(key);
-    }
-
-    /**
-     * Resends all values to the player, typically on server switch on proxy.
-     */
-    public void resendAllValues() {
-        if (player instanceof ProxyTabPlayer && TAB.getInstance().getConfiguration().getConfig().getPlaceholders().isRegisterTabExpansion()) {
-            for (Map.Entry<String, String> entry : data.entrySet()) {
-                ((ProxyTabPlayer)player).sendPluginMessage(new ExpansionPlaceholder(entry.getKey(), entry.getValue()));
-            }
-        }
     }
 }

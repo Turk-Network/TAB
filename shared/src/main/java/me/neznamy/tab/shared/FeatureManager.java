@@ -30,9 +30,6 @@ import me.neznamy.tab.shared.features.sorting.Sorting;
 import me.neznamy.tab.shared.features.types.*;
 import me.neznamy.tab.shared.platform.TabPlayer;
 import me.neznamy.tab.shared.platform.decorators.TrackedTabList;
-import me.neznamy.tab.shared.proxy.ProxyPlatform;
-import me.neznamy.tab.shared.proxy.ProxyTabPlayer;
-import me.neznamy.tab.shared.proxy.message.outgoing.Unload;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -96,11 +93,6 @@ public class FeatureManager {
         }
         TAB.getInstance().debug("Unregistered all scoreboard teams, objectives and boss bars for all players in " + (System.currentTimeMillis()-time) + "ms");
         TAB.getInstance().getPlaceholderManager().getTabExpansion().unregisterExpansion();
-        if (TAB.getInstance().getPlatform() instanceof ProxyPlatform) {
-            for (TabPlayer player : TAB.getInstance().getOnlinePlayers()) {
-                ((ProxyTabPlayer)player).sendPluginMessage(new Unload());
-            }
-        }
         TAB.getInstance().getPlatform().unregisterAllCustomCommands();
     }
 
@@ -256,7 +248,6 @@ public class FeatureManager {
         if (changed == null) return;
         Server from = changed.server;
         changed.server = to;
-        ((ProxyTabPlayer)changed).sendJoinPluginMessage();
         ((TrackedTabList<?>)changed.getTabList()).resendHeaderFooter();
         for (TabFeature f : values) {
             if (!(f instanceof ServerSwitchListener)) continue;

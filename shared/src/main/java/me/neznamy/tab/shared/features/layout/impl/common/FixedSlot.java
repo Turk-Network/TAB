@@ -12,7 +12,6 @@ import me.neznamy.tab.shared.features.layout.pattern.LayoutPattern;
 import me.neznamy.tab.shared.features.types.RefreshableFeature;
 import me.neznamy.tab.shared.platform.TabList;
 import me.neznamy.tab.shared.platform.TabPlayer;
-import me.neznamy.tab.shared.proxy.ProxyTabPlayer;
 import me.neznamy.tab.shared.util.cache.StringToComponentCache;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -136,7 +135,6 @@ public class FixedSlot extends RefreshableFeature {
         try {
             return (int) Math.round(Double.parseDouble(trimmed));
         } catch (NumberFormatException ignored) {
-            if (viewer instanceof ProxyTabPlayer && !((ProxyTabPlayer)viewer).isBridgeConnected()) return defaultPing;
             if (pingText != null && pingText.contains("%")) {
                 TAB.getInstance().getConfigHelper().runtime().error(String.format(
                         "Placeholder \"%s\" used as fixed slot ping in layout \"%s\" (slot %d) returned \"%s\" for player %s, which is not a valid number.",

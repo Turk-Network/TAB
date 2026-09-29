@@ -16,7 +16,6 @@ public class TabConstants {
 
     public static final String NO_GROUP = "NONE";
     public static final String DEFAULT_GROUP = "_DEFAULT_";
-    public static final String PLUGIN_MESSAGE_CHANNEL_NAME = "tab:bridge-6";
     public static final String PIPELINE_HANDLER_NAME = ProjectVariables.PLUGIN_NAME;
 
     public static final int BSTATS_PLUGIN_ID_BUKKIT = 5304;
@@ -39,10 +38,6 @@ public class TabConstants {
         public static final String SERVER_SWITCH = "Server Switch";
         public static final String PROXY_MESSAGE = "Proxy Message processing";
 
-        public static final String PLUGIN_MESSAGE_DECODE = "Decoding message";
-        public static final String PLUGIN_MESSAGE_PROCESS = "Processing message";
-        public static final String PLUGIN_MESSAGE_ENCODE = "Encoding message";
-        public static final String PLUGIN_MESSAGE_SEND = "Sending message";
 
         public static final String NICK_PLUGIN_COMPATIBILITY = "Compatibility with nick plugins";
         public static final String BYTE_BUF = "ByteBuf";
