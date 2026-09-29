@@ -8,8 +8,8 @@ import me.neznamy.tab.shared.proxy.message.outgoing.ExpansionPlaceholder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Class holding data for TAB's PlaceholderAPI expansion for fast access.
@@ -23,7 +23,7 @@ public class ExpansionData {
 
     /** Map of placeholder identifiers to their values */
     @NotNull
-    private final Map<String, String> data = new HashMap<>();
+    private final Map<String, String> data = new ConcurrentHashMap<>();
 
     /**
      * Sets scoreboard visibility placeholder to specified value.
@@ -110,7 +110,7 @@ public class ExpansionData {
      *          Placeholder value
      */
     private void setValue(@NotNull String key, @NotNull String value) {
-        data.put(key, value);
+        if (value.equals(data.put(key, value))) return; // Value did not change, do not send a plugin message
         if (player instanceof ProxyTabPlayer && TAB.getInstance().getConfiguration().getConfig().getPlaceholders().isRegisterTabExpansion()) {
             ((ProxyTabPlayer)player).sendPluginMessage(new ExpansionPlaceholder(key, value));
         }
