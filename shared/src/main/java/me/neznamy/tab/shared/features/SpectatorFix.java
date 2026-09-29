@@ -33,9 +33,10 @@ public class SpectatorFix extends TabFeature implements JoinListener, Loadable, 
      *          If target's view should be updated as well
      */
     private void updatePlayer(@NotNull TabPlayer viewer, boolean realGameMode, boolean mutually) {
+        boolean viewerBypass = viewer.hasPermission(TabConstants.Permission.SPECTATOR_BYPASS);
         for (TabPlayer target : TAB.getInstance().getOnlinePlayers()) {
             if (viewer == target) continue;
-            if (!viewer.hasPermission(TabConstants.Permission.SPECTATOR_BYPASS)) {
+            if (!viewerBypass) {
                 if (realGameMode) {
                     viewer.getTabList().unblockSpectator(target);
                 } else {

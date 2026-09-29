@@ -164,13 +164,15 @@ public abstract class TrackedTabList<P extends TabPlayer> implements TabList {
     @Override
     public void blockSpectator(@NonNull TabPlayer player) {
         blockedSpectators.add(player.getTablistId());
-        updateGameMode(player, 0);
+        // Only spectators are displayed differently, do not send a packet for everyone else
+        if (player.getGamemode() == 3) updateGameMode(player, 0);
     }
 
     @Override
     public void unblockSpectator(@NonNull TabPlayer player) {
         blockedSpectators.remove(player.getTablistId());
-        updateGameMode(player, player.getGamemode());
+        int gameMode = player.getGamemode();
+        if (gameMode == 3) updateGameMode(player, gameMode);
     }
 
     @Override
