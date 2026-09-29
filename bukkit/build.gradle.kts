@@ -1,7 +1,7 @@
 dependencies {
     api(projects.shared)
     implementation("org.bstats:bstats-bukkit:3.1.0")
-    compileOnly("org.purpurmc.purpur:purpur-api:1.16.5-R0.1-SNAPSHOT")
+    compileOnly("io.papermc.paper:paper-api:1.21.1-R0.1-SNAPSHOT")
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly("com.github.MilkBowl:VaultAPI:1.7") {
         exclude("org.bukkit", "bukkit")
@@ -14,4 +14,8 @@ dependencies {
         exclude("net.md-5", "bungeecord-chat")
     }
     compileOnly("com.github.LeonMangler:PremiumVanishAPI:2.8.8")
+}
+
+tasks.compileJava {
+    options.release.set(21) // Minecraft 1.21+ requires Java 21
 }

@@ -1,7 +1,7 @@
 package me.neznamy.tab.platforms.bukkit.platform;
 
+import io.papermc.paper.threadedregions.scheduler.GlobalRegionScheduler;
 import lombok.NonNull;
-import lombok.SneakyThrows;
 import me.clip.placeholderapi.PlaceholderAPI;
 import me.neznamy.tab.platforms.bukkit.features.PerWorldPlayerList;
 import me.neznamy.tab.shared.TAB;
@@ -14,14 +14,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerChangedWorldEvent;
-import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.jetbrains.annotations.NotNull;
 
-import java.lang.reflect.Method;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 /**
@@ -31,10 +28,7 @@ public class FoliaPlatform extends BukkitPlatform {
 
     /** Global tick thread scheduler */
     @NotNull
-    private final Object globalScheduler;
-
-    /** FoliaGlobalRegionScheduler#execute(Plugin, Runnable) method */
-    private final Method globalScheduler_execute;
+    private final GlobalRegionScheduler globalScheduler = Bukkit.getGlobalRegionScheduler();
 
     /**
      * Constructs new instance with given plugin.
@@ -42,12 +36,8 @@ public class FoliaPlatform extends BukkitPlatform {
      * @param   plugin
      *          Plugin
      */
-    @SneakyThrows
-    @SuppressWarnings("JavaReflectionMemberAccess")
     public FoliaPlatform(@NotNull JavaPlugin plugin) {
         super(plugin);
-        globalScheduler = Bukkit.class.getMethod("getGlobalRegionScheduler").invoke(null);
-        globalScheduler_execute = globalScheduler.getClass().getMethod("execute", Plugin.class, Runnable.class);
     }
 
     @Override
@@ -56,14 +46,20 @@ public class FoliaPlatform extends BukkitPlatform {
 
         // Folia never calls PlayerChangedWorldEvent, this is a workaround
         TAB.getInstance().getCpu().getProcessingThread().repeatTask(new TimedCaughtTask(TAB.getInstance().getCpu(), ()  -> {
+            PerWorldPlayerList pwp = null;
+            boolean pwpChecked = false;
             for (TabPlayer player : TAB.getInstance().getOnlinePlayers()) {
-                World actualWorld = World.byName(((Player) player.getPlayer()).getWorld().getName());
-                if (player.world != actualWorld) {
-                    TAB.getInstance().getFeatureManager().onWorldChange(player.getUniqueId(), actualWorld);
-                    PerWorldPlayerList pwp = TAB.getInstance().getFeatureManager().getFeature(TabConstants.Feature.PER_WORLD_PLAYER_LIST);
-                    if (pwp != null) {
-                        runSync((Entity) player.getPlayer(), () -> pwp.onWorldChange(new PlayerChangedWorldEvent((Player) player.getPlayer(), ((Player) player.getPlayer()).getWorld())));
-                    }
+                Player bukkitPlayer = (Player) player.getPlayer();
+                String worldName = bukkitPlayer.getWorld().getName();
+                if (player.world.getName().equals(worldName)) continue;
+                TAB.getInstance().getFeatureManager().onWorldChange(player.getUniqueId(), World.byName(worldName));
+                if (!pwpChecked) {
+                    pwp = TAB.getInstance().getFeatureManager().getFeature(TabConstants.Feature.PER_WORLD_PLAYER_LIST);
+                    pwpChecked = true;
+                }
+                if (pwp != null) {
+                    PerWorldPlayerList finalPwp = pwp;
+                    runSync(bukkitPlayer, () -> finalPwp.onWorldChange(new PlayerChangedWorldEvent(bukkitPlayer, bukkitPlayer.getWorld())));
                 }
             }
         }, "Folia compatibility", "Refreshing world"), 100);
@@ -137,9 +133,8 @@ public class FoliaPlatform extends BukkitPlatform {
     }
 
     /**
-     * Runs task using player's entity scheduler. It's using reflection, because
-     * Folia uses Java 17 while TAB maintains Java 8 compatibility for compatibility
-     * with MC versions older than their player base.
+     * Runs task using entity's scheduler, which executes it on the region thread owning the entity.
+     * If the entity is removed before the task could run, it is silently dropped.
      *
      * @param   entity
      *          entity to run task for
@@ -147,29 +142,21 @@ public class FoliaPlatform extends BukkitPlatform {
      *          Task to run
      */
     @Override
-    @SneakyThrows
-    @SuppressWarnings("JavaReflectionMemberAccess")
     public void runSync(@NotNull Entity entity, @NotNull Runnable task) {
         if (!getPlugin().isEnabled()) return; // Server shutdown, no one cares anymore, everyone is about to be kicked
-        Object entityScheduler = Entity.class.getMethod("getScheduler").invoke(entity);
-        Consumer<?> consumer = $ -> task.run(); // Reflection and lambdas don't go together
-        entityScheduler.getClass().getMethod("run", Plugin.class, Consumer.class, Runnable.class)
-                .invoke(entityScheduler, getPlugin(), consumer, null);
+        entity.getScheduler().run(getPlugin(), scheduledTask -> task.run(), null);
     }
 
     /**
-     * Runs task in global tick thread. It's using reflection, because
-     * Folia uses Java 17 while TAB maintains Java 8 compatibility for compatibility
-     * with MC versions older than their player base.
+     * Runs task in global tick thread.
      *
      * @param   task
      *          Task to run
      */
     @Override
-    @SneakyThrows
     public void runSyncGlobal(@NotNull Runnable task) {
         if (!getPlugin().isEnabled()) return; // Server shutdown, no one cares anymore, everyone is about to be kicked
-        globalScheduler_execute.invoke(globalScheduler, getPlugin(), task);
+        globalScheduler.execute(getPlugin(), task);
     }
 
     @Override
