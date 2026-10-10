@@ -59,7 +59,7 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
      * Reverse index of {@link #teams}, key is team entry and value is the team it belongs to.
      * Read from netty threads on every team packet, so it must stay O(1) instead of scanning all teams.
      */
-    private final Map<String, Team> teamByEntry = new ConcurrentHashMap<>();
+    private final Map<String, Team> teamsByEntries = new ConcurrentHashMap<>();
 
     @Override
     public synchronized void registerObjective(@NonNull String objectiveName, @NonNull TabComponent title,
@@ -158,7 +158,7 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
         Team team = new Team(createTeam(name), name, prefix, suffix, visibility, collision, players, options, color);
         teams.put(name, team);
         for (String entry : players) {
-            teamByEntry.put(entry, team);
+            teamsByEntries.put(entry, team);
         }
         if (frozen) return;
         registerTeam(team);
@@ -172,7 +172,7 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
             return;
         }
         for (String entry : team.getPlayers()) {
-            teamByEntry.remove(entry, team);
+            teamsByEntries.remove(entry, team);
         }
         if (frozen) return;
         unregisterTeam(team);
@@ -246,7 +246,7 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
         for (String team : teams.keySet()) {
             unregisterTeam(team);
         }
-        teamByEntry.clear();
+        teamsByEntries.clear();
     }
 
     @Override
@@ -357,7 +357,7 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
         List<String> newList = new ArrayList<>();
         if (action == TeamAction.CREATE || action == TeamAction.ADD_PLAYER) {
             for (String entry : players) {
-                Team expectedTeam = getExpectedTeam(entry);
+                Team expectedTeam = teamsByEntries.get(entry);
                 if (expectedTeam == null) {
                     blockedTeamAdds.remove(entry);
                     allowedTeamAdds.put(entry, teamName);
@@ -376,7 +376,7 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
         if (action == TeamAction.REMOVE_PLAYER) {
             // TAB does not send remove player, making checks easier
             for (String entry : players) {
-                Team expectedTeam = getExpectedTeam(entry);
+                Team expectedTeam = teamsByEntries.get(entry);
                 if (expectedTeam != null) {
                     allowedTeamAdds.remove(entry);
                     blockedTeamAdds.remove(entry);
@@ -409,11 +409,6 @@ public abstract class SafeScoreboard<T extends TabPlayer> implements Scoreboard 
      */
     public static boolean isUnmodified(@NonNull Collection<String> original, @NonNull Collection<String> filtered) {
         return original.size() == filtered.size();
-    }
-
-    @Nullable
-    private Team getExpectedTeam(@NotNull String player) {
-        return teamByEntry.get(player);
     }
 
     /**

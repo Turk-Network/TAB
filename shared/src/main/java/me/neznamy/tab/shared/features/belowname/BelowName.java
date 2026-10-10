@@ -292,8 +292,8 @@ public class BelowName extends RefreshableFeature implements JoinListener, QuitL
     private void updatePlayer(@NotNull TabPlayer player) {
         int value = getValue(player);
         for (TabPlayer all : onlinePlayers.getPlayers()) {
-            setScore(player, all, all == player ? value : getValue(all), all.belowNameData.fancyValue.getFormat(player));
-            if (all != player) setScore(all, player, value, player.belowNameData.fancyValue.getFormat(all));
+            if (all != player) setScore(player, all, getValue(all), all.belowNameData.fancyValue.getFormat(player));
+            setScore(all, player, value, player.belowNameData.fancyValue.getFormat(all));
         }
     }
 
